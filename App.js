@@ -22,7 +22,13 @@ const blendShapes = [
   // AR.BlendShapes.EyeLookInL,
   AR.BlendShapes.EyeBlinkL,
   AR.BlendShapes.EyeBlinkR,
+  AR.BlendShapes.MouthPucker,
 ];
+
+const Settings = {
+  pageTurning: false,
+  zooming: true,
+};
 
 export default class App extends React.PureComponent {
   state = {
@@ -92,32 +98,70 @@ export default class App extends React.PureComponent {
       [AR.BlendShapes.EyeLookInL]: eyeLookInL,
       [AR.BlendShapes.EyeBlinkL]: blinkL,
       [AR.BlendShapes.EyeBlinkR]: blinkR,
+      [AR.BlendShapes.MouthPucker]: mouthPucker,
     } = blendShapes;
 
     // if (!this.lightbox) {
     //   return;
     // }
 
-    const EYE_CLOSED_AMOUNT = 0.4;
-    const EYE_OPENED_AMOUNT = 0.0001;
-    // console.log(blinkL);
-    if (this.openedEyeL && blinkL > EYE_CLOSED_AMOUNT) {
-      this.openedEyeL = false;
-      this.winkedLeft();
-      console.log('L closed');
-    } else if (!this.openedEyeL && blinkL < EYE_OPENED_AMOUNT) {
-      console.log('L opened');
-      this.openedEyeL = true;
+    if (Settings.pageTurning) {
+      const EYE_CLOSED_AMOUNT = 0.4;
+      const EYE_OPENED_AMOUNT = 0.0001;
+      // console.log(blinkL);
+      if (this.openedEyeL && blinkL > EYE_CLOSED_AMOUNT) {
+        this.openedEyeL = false;
+        this.winkedLeft();
+        console.log('L closed');
+      } else if (!this.openedEyeL && blinkL < EYE_OPENED_AMOUNT) {
+        console.log('L opened');
+        this.openedEyeL = true;
+      }
+
+      if (this.openedEyeR && blinkR > EYE_CLOSED_AMOUNT) {
+        this.openedEyeR = false;
+        this.winkedRight();
+        console.log('R closed');
+      } else if (!this.openedEyeR && blinkR < EYE_OPENED_AMOUNT) {
+        console.log('R opened');
+
+        this.openedEyeR = true;
+      }
     }
+    if (Settings.zooming) {
+      const PUCKER_MAX = 0.9;
+      const PUCKER_MIN = 0.05;
+      const delta = PUCKER_MAX - PUCKER_MIN;
+      const zoomLevel =
+        (Math.min(PUCKER_MAX, Math.max(PUCKER_MIN, mouthPucker)) - PUCKER_MIN) /
+        delta;
 
-    if (this.openedEyeR && blinkR > EYE_CLOSED_AMOUNT) {
-      this.openedEyeR = false;
-      this.winkedRight();
-      console.log('R closed');
-    } else if (!this.openedEyeR && blinkR < EYE_OPENED_AMOUNT) {
-      console.log('R opened');
+      let maximumZoomScale = (this.lightbox.currentPage || {}).maximumZoomScale;
+      // console.log(zoomLevel);
 
-      this.openedEyeR = true;
+      let lightbox = this.lightbox;
+      if (lightbox && lightbox.currentPage) {
+        lightbox.currentPage.zoomWithAmount(1 - zoomLevel);
+      }
+
+      // if (this.openedEyeL && blinkL > EYE_CLOSED_AMOUNT) {
+      //   this.openedEyeL = false;
+      //   this.winkedLeft();
+      //   console.log('L closed');
+      // } else if (!this.openedEyeL && blinkL < EYE_OPENED_AMOUNT) {
+      //   console.log('L opened');
+      //   this.openedEyeL = true;
+      // }
+
+      // if (this.openedEyeR && blinkR > EYE_CLOSED_AMOUNT) {
+      //   this.openedEyeR = false;
+      //   this.winkedRight();
+      //   console.log('R closed');
+      // } else if (!this.openedEyeR && blinkR < EYE_OPENED_AMOUNT) {
+      //   console.log('R opened');
+
+      //   this.openedEyeR = true;
+      // }
     }
 
     // console.log('face shapes', blendShapes);
@@ -204,10 +248,7 @@ export default class App extends React.PureComponent {
   };
 
   render() {
-    const {
-      [AR.BlendShapes.EyeBlinkL]: eyeL,
-      [AR.BlendShapes.EyeBlinkR]: eyeR,
-    } = this.state;
+    const keysToDisplay = [AR.BlendShapes.MouthPucker];
 
     /*
 
@@ -231,9 +272,11 @@ export default class App extends React.PureComponent {
         />
 
         <View style={styles.infoContainer}>
-          <InfoBox title="Right Eye">{eyeR}</InfoBox>
-
-          <InfoBox title="Left Eye">{eyeL}</InfoBox>
+          {keysToDisplay.map((item, index) => (
+            <InfoBox key={`-${index}`} title={item}>
+              {this.state[item]}
+            </InfoBox>
+          ))}
         </View>
       </View>
     );

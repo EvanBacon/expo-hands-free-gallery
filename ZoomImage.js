@@ -2,7 +2,11 @@ import React from 'react';
 import { ScrollView, Image, Dimensions } from 'react-native';
 import TapView from './TapView';
 const { width } = Dimensions.get('window');
-import { calculateMaximumZoomScale, calculateRect } from './RectUtils';
+import {
+  calculateMaximumZoomScale,
+  calculateSizeForZoomScale,
+  calculateRect,
+} from './RectUtils';
 
 async function getImageSizeAsync(uri) {
   return new Promise((res, rej) =>
@@ -16,7 +20,7 @@ export default class App extends React.Component {
     layout: null,
     maximumZoomScale: 1,
   };
-
+  maximumZoomScale = 1;
   constructor(props) {
     super(props);
     this.state = {
@@ -57,6 +61,7 @@ export default class App extends React.Component {
     if (layout != this.state.layout) {
       const { size } = this.state;
       const maximumZoomScale = calculateMaximumZoomScale(size, layout);
+      this.maximumZoomScale = maximumZoomScale;
       this.setState({ layout, maximumZoomScale });
     }
   };
@@ -83,6 +88,18 @@ export default class App extends React.Component {
       }
     }
   }
+
+  zoomWithAmount = zoomLevel => {
+    const { layout } = this.state;
+    if (layout && this.maximumZoomScale) {
+      const nextSize = calculateSizeForZoomScale(
+        this.state.layout,
+        this.maximumZoomScale,
+        zoomLevel,
+      );
+      this.scrollTo({ x: 0, y: 0, ...nextSize });
+    }
+  };
 
   scrollTo = ({ x, y, width, height }, animated) =>
     this.scrollResponderRef.scrollResponderZoomTo({
@@ -162,6 +179,9 @@ export default class App extends React.Component {
           minimumZoomScale={1}
           horizontal={this.horizontal}
           maximumZoomScale={maximumZoomScale}
+          onContentSizeChange={(height, width) =>
+            (this.contentSize = { height, width })
+          }
           centerContent={true}
         >
           <Image

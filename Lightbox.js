@@ -42,6 +42,7 @@ export default class App extends Component {
     const selected = this.state.index === index;
     return (
       <ZoomImage
+        ref={ref => (this.pages[index] = ref)}
         style={styles.item}
         id={index}
         selected={selected}
@@ -50,6 +51,12 @@ export default class App extends Component {
       />
     );
   };
+
+  pages = {};
+
+  get currentPage() {
+    return this.pages[this.viewPager.index];
+  }
 
   previous = () => {
     if (this.viewPager) {

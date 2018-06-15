@@ -14,6 +14,25 @@ export function calculateMaximumZoomScale(imageSize, { width, height }) {
   return zoom;
 }
 
+export function calculateSizeForZoomScale(imageSize, maximumZoom, zoomScale) {
+  if (!imageSize) {
+    console.warn('size not ready yet!');
+    return;
+  }
+  //   const zoom = Math.max(
+  //     2,
+  //     Math.max(imageSize.width / width, imageSize.height / height),
+  //   );
+
+  // zoom = 1
+  const maxWidth = imageSize.width * maximumZoom;
+  const maxHeight = imageSize.height * maximumZoom;
+  const frame = { width: maxWidth * zoomScale, height: maxHeight * zoomScale };
+
+  console.log(zoomScale, frame);
+  return frame;
+}
+
 export function calculateRect({ imageSize, containerSize, resizeMode }) {
   if (!imageSize || !containerSize) {
     console.log('imageSize or containerSize not ready yet!');
