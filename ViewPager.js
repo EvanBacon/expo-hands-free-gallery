@@ -1,6 +1,6 @@
+import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { Animated, FlatList } from 'react-native';
-import PropTypes from 'prop-types'; // 15.6.0
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 class ViewPager extends Component {

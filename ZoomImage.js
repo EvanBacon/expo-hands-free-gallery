@@ -1,13 +1,10 @@
 import React from 'react';
-import { ScrollView, Image, Dimensions } from 'react-native';
-import TapView from './TapView';
-const { width } = Dimensions.get('window');
-import {
-  calculateMaximumZoomScale,
-  calculateSizeForZoomScale,
-  calculateRect,
-} from './RectUtils';
+import { Dimensions, Image, ScrollView } from 'react-native';
 
+import { calculateRect, calculateSizeForZoomScale } from './RectUtils';
+import TapView from './TapView';
+
+const { width } = Dimensions.get('window');
 async function getImageSizeAsync(uri) {
   return new Promise((res, rej) =>
     Image.getSize(uri, (width, height) => res({ width, height }), rej),
@@ -34,6 +31,7 @@ export default class App extends React.Component {
       const { size, uri } = this.state;
       if (!size && uri) {
         const nextSize = await getImageSizeAsync(uri);
+        console.log({ nextSize });
         this.setState({
           size: nextSize,
         });
@@ -60,7 +58,8 @@ export default class App extends React.Component {
   onLayout = ({ nativeEvent: { layout } }) => {
     if (layout != this.state.layout) {
       const { size } = this.state;
-      const maximumZoomScale = calculateMaximumZoomScale(size, layout);
+      console.log({ size });
+      const maximumZoomScale = 2; //calculateMaximumZoomScale(size, layout);
       this.maximumZoomScale = maximumZoomScale;
       this.setState({ layout, maximumZoomScale });
     }
@@ -115,14 +114,17 @@ export default class App extends React.Component {
     }
   };
 
-  scrollTo = ({ x, y, width, height }, animated) =>
-    this.scrollResponderRef.scrollResponderZoomTo({
-      x,
-      y,
-      width,
-      height,
-      animated,
-    });
+  scrollTo = ({ x, y, width, height }, animated) => {
+    if (this.scrollResponderRef) {
+      this.scrollResponderRef.scrollResponderZoomTo({
+        x,
+        y,
+        width,
+        height,
+        animated,
+      });
+    }
+  };
 
   zoomOut = (animated = true) => {
     this.scrollTo({ width: 100000, height: 100000 }, animated);
@@ -155,9 +157,10 @@ export default class App extends React.Component {
     return (this.state.layout || {}).width > this.imageStyle.width;
   }
   render() {
-    if (!this.props.size) {
+    if (!this.state.size) {
       return null;
     }
+    console.log(this.state.size);
 
     const { uri, maximumZoomScale } = this.state;
     const { style, id } = this.props;

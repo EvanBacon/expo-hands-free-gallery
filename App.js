@@ -1,25 +1,12 @@
+import { AR } from 'expo';
+import { View as GraphicsView } from 'expo-graphics';
+import ExpoTHREE, { AR as ThreeAR, THREE } from 'expo-three';
 import React, { Component } from 'react';
-import {
-  Text,
-  Slider,
-  ScrollView,
-  Image,
-  View,
-  StyleSheet,
-  Dimensions,
-} from 'react-native';
-import { Constants, AR } from 'expo';
+import { Slider, StyleSheet, Text, View } from 'react-native';
+
 import Lightbox from './Lightbox';
 
-// You can import from local files
-import AssetExample from './components/AssetExample';
-import ExpoTHREE, { THREE, AR as ThreeAR } from 'expo-three';
-// or any pure javascript modules available in npm
-import { Card } from 'react-native-elements'; // Version can be specified in package.json
-import { View as GraphicsView } from 'expo-graphics';
 const blendShapes = [
-  // AR.BlendShapes.BrowDownL,
-  // AR.BlendShapes.CheekPuff,
   AR.BlendShapes.EyeLookInL,
   AR.BlendShapes.EyeLookOutL,
   AR.BlendShapes.EyeLookDownL,
@@ -27,6 +14,7 @@ const blendShapes = [
   AR.BlendShapes.EyeBlinkL,
   AR.BlendShapes.EyeBlinkR,
   AR.BlendShapes.MouthPucker,
+  AR.BlendShapes.MouthSmileL,
 ];
 
 const Settings = {
@@ -66,7 +54,6 @@ export default class App extends React.PureComponent {
         const frame = AR.getCurrentFrame({
           [AR.FrameAttributes.Anchors]: {
             [AR.AnchorTypes.Face]: {
-              // geometry: true,
               blendShapes,
             },
           },
@@ -97,8 +84,6 @@ export default class App extends React.PureComponent {
     const { blendShapes, transform } = anchor;
 
     const {
-      [AR.BlendShapes.BrowDownL]: leftEyebrow,
-      [AR.BlendShapes.CheekPuff]: cheekPuff,
       [AR.BlendShapes.EyeLookInL]: eyeLookInL,
       [AR.BlendShapes.EyeLookOutL]: eyeLookOutL,
       [AR.BlendShapes.EyeBlinkL]: blinkL,
@@ -106,6 +91,7 @@ export default class App extends React.PureComponent {
       [AR.BlendShapes.MouthPucker]: mouthPucker,
       [AR.BlendShapes.EyeLookDownL]: eyeLookDownL,
       [AR.BlendShapes.EyeLookUpL]: eyeLookUpL,
+      [AR.BlendShapes.MouthSmileL]: smileL,
     } = blendShapes;
 
     if (Settings.pageTurning) {
@@ -144,32 +130,7 @@ export default class App extends React.PureComponent {
         delta;
 
       let maximumZoomScale = (this.lightbox.currentPage || {}).maximumZoomScale;
-      // console.log(zoomLevel);
-
       trans.scale = 1 + zoomLevel;
-      // let lightbox = this.lightbox;
-      // if (lightbox && lightbox.currentPage) {
-      //   lightbox.currentPage.zoomWithAmount(1 - zoomLevel);
-      // }
-
-      // if (this.openedEyeL && blinkL > EYE_CLOSED_AMOUNT) {
-      //   this.openedEyeL = false;
-      //   this.winkedLeft();
-      //   console.log('L closed');
-      // } else if (!this.openedEyeL && blinkL < EYE_OPENED_AMOUNT) {
-      //   console.log('L opened');
-      //   this.openedEyeL = true;
-      // }
-
-      // if (this.openedEyeR && blinkR > EYE_CLOSED_AMOUNT) {
-      //   this.openedEyeR = false;
-      //   this.winkedRight();
-      //   console.log('R closed');
-      // } else if (!this.openedEyeR && blinkR < EYE_OPENED_AMOUNT) {
-      //   console.log('R opened');
-
-      //   this.openedEyeR = true;
-      // }
     }
 
     if (Settings.panning) {
@@ -179,8 +140,6 @@ export default class App extends React.PureComponent {
           (Math.min(max, Math.max(min, value)) - min) / delta;
 
         return adjustedValue;
-        // let maximumZoomScale = (this.lightbox.currentPage || {}).maximumZoomScale;
-        // console.log(zoomLevel);
       };
 
       const calcValues = (a, b) => {
@@ -245,13 +204,24 @@ export default class App extends React.PureComponent {
   };
 
   render() {
-    const keysToDisplay = [AR.BlendShapes.MouthPucker];
+    const keysToDisplay = [AR.BlendShapes.MouthSmileL];
 
-    /*
-
-*/
+    let smile = this.state[AR.BlendShapes.MouthSmileL];
+    if (smile < 0.15) {
+      smile = 0;
+    }
+    const shakeMax = 12;
+    const shakeAmount = shakeMax - 2 * shakeMax * Math.random();
+    let intensityShake = shakeAmount * smile;
+    if (isNaN(intensityShake)) {
+      intensityShake = 0;
+    }
+    const shakeRot = `${intensityShake}deg`;
+    const shakeStyle = {
+      transform: [{ rotateZ: shakeRot }],
+    };
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, shakeStyle]}>
         <LightBoxWrapper
           id={'light-box'}
           ref={ref => (this._lightboxContainer = ref)}
@@ -273,7 +243,9 @@ export default class App extends React.PureComponent {
           id={'graphics-view'}
         />
 
-        <View style={[styles.infoContainer, { opacity: this.state.opacity }]}>
+        <View
+          style={[styles.infoContainer, { opacity: 1 - this.state.opacity }]}
+        >
           {keysToDisplay.map((item, index) => (
             <InfoBox key={`-${index}`} title={item}>
               {this.state[item]}
@@ -285,50 +257,23 @@ export default class App extends React.PureComponent {
           style={{
             position: 'absolute',
             bottom: 48,
-            left: 24,
-            right: 24,
+            left: 48,
+            right: 48,
             height: 24,
           }}
           minimumValue={0.01}
           maximumValue={1}
+          value={this.state.opacity}
+          minimumTrackTintColor={'orange'}
+          thumbTintColor={'black'}
           onValueChange={opacity => this.setState({ opacity })}
         />
       </View>
     );
   }
-
-  //   <ScrollView
-  //   maximumZoomScale={2}
-  //   minimumZoomScale={1}
-  //   contentContainerStyle={{
-  //     justifyContent: 'center',
-  //     alignItems: 'center',
-  //   }}
-  //   onContentSizeChange={(height, width) =>
-  //     (this.contentSize = { height, width })
-  //   }
-  //   onLayout={({ nativeEvent: { layout } }) =>
-  //     (this.scrollViewLayout = layout)
-  //   }
-  //   style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.2)' }}
-  //   ref={ref => (this.scrollView = ref)}
-  // >
-  //   <Image
-  //     source={require('./assets/expo.symbol.white.png')}
-  //     style={{
-  //       width: '100%',
-  //       aspectRatio: 1,
-  //       resizeMode: 'contain',
-  //       backgroundColor: 'red',
-  //     }}
-  //   />
-  // </ScrollView>
 }
 
 class LightBoxWrapper extends React.PureComponent {
-  shouldComponentUpdate() {
-    return false;
-  }
   render() {
     return <Lightbox id={'light-box'} ref={ref => (this.lightbox = ref)} />;
   }
@@ -337,9 +282,6 @@ class LightBoxWrapper extends React.PureComponent {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // alignItems: 'center',
-    // justifyContent: 'center',
-    // paddingTop: Constants.statusBarHeight,
     backgroundColor: 'black',
   },
   paragraph: {

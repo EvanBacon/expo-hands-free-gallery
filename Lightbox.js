@@ -1,40 +1,15 @@
 import React, { Component } from 'react';
-import { Dimensions, View, StyleSheet, Button } from 'react-native';
+import { Button, Dimensions, StyleSheet, View } from 'react-native';
 
-import ZoomImage from './ZoomImage';
+import Photos from './Photos';
 import ViewPager from './ViewPager';
+import ZoomImage from './ZoomImage';
 
 const { width: size } = Dimensions.get('window');
 
 export default class App extends Component {
   state = {
-    data: [
-      {
-        uri:
-          'https://media.licdn.com/mpr/mpr/shrinknp_200_200/p/3/000/02a/1f0/3d8d1a0.jpg',
-        size: { width: 200, height: 200 },
-      },
-      {
-        uri:
-          'https://media.licdn.com/mpr/mpr/shrinknp_200_200/p/3/000/02a/1f0/3d8d1a0.jpg',
-        size: { width: 200, height: 200 },
-      },
-      {
-        uri:
-          'https://media.licdn.com/mpr/mpr/shrinknp_200_200/p/3/000/02a/1f0/3d8d1a0.jpg',
-        size: { width: 200, height: 200 },
-      },
-      {
-        uri:
-          'https://media.licdn.com/mpr/mpr/shrinknp_200_200/p/3/000/02a/1f0/3d8d1a0.jpg',
-        size: { width: 200, height: 200 },
-      },
-      {
-        uri:
-          'https://media.licdn.com/mpr/mpr/shrinknp_200_200/p/3/000/02a/1f0/3d8d1a0.jpg',
-        size: { width: 200, height: 200 },
-      },
-    ],
+    data: Photos.map(uri => ({ uri })),
     index: 0,
   };
 
@@ -92,10 +67,20 @@ export default class App extends Component {
           horizontal={true}
         />
 
-        <View style={styles.footer}>
-          <Button title="previous" onPress={() => this.previous()} />
-          <Button title="next" onPress={() => this.next()} />
-        </View>
+        {false && (
+          <View style={styles.footer}>
+            <Button
+              style={styles.button}
+              title="previous"
+              onPress={() => this.previous()}
+            />
+            <Button
+              style={styles.button}
+              title="next"
+              onPress={() => this.next()}
+            />
+          </View>
+        )}
       </View>
     );
   }
@@ -105,9 +90,12 @@ const styles = StyleSheet.create({
   viewPager: {
     flex: 1,
   },
+  button: {
+    color: 'orange',
+  },
   footer: {
     position: 'absolute',
-    bottom: 8,
+    top: 48,
     right: 0,
     left: 0,
     flexDirection: 'row',
