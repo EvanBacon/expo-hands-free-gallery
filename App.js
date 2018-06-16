@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {
   Text,
+  Slider,
   ScrollView,
   Image,
   View,
@@ -29,7 +30,7 @@ const blendShapes = [
 ];
 
 const Settings = {
-  pageTurning: false,
+  pageTurning: true,
   zooming: true,
   panning: true,
 };
@@ -37,6 +38,7 @@ const Settings = {
 export default class App extends React.PureComponent {
   state = {
     maximumZoomScale: 2,
+    opacity: 0.3,
   };
   componentDidMount() {
     THREE.suppressExpoWarnings(true);
@@ -88,9 +90,7 @@ export default class App extends React.PureComponent {
   };
   winkedRight = () => {
     if (this.lightbox) this.lightbox.previous();
-
     console.log('wink right');
-    // this.lightbox.next();
   };
 
   handleFace = (anchor, eventType) => {
@@ -108,18 +108,14 @@ export default class App extends React.PureComponent {
       [AR.BlendShapes.EyeLookUpL]: eyeLookUpL,
     } = blendShapes;
 
-    // if (!this.lightbox) {
-    //   return;
-    // }
-
     if (Settings.pageTurning) {
       const EYE_CLOSED_AMOUNT = 0.4;
       const EYE_OPENED_AMOUNT = 0.0001;
-      // console.log(blinkL);
       if (this.openedEyeL && blinkL > EYE_CLOSED_AMOUNT) {
         this.openedEyeL = false;
         this.winkedLeft();
         console.log('L closed');
+        return;
       } else if (!this.openedEyeL && blinkL < EYE_OPENED_AMOUNT) {
         console.log('L opened');
         this.openedEyeL = true;
@@ -129,6 +125,7 @@ export default class App extends React.PureComponent {
         this.openedEyeR = false;
         this.winkedRight();
         console.log('R closed');
+        return;
       } else if (!this.openedEyeR && blinkR < EYE_OPENED_AMOUNT) {
         console.log('R opened');
 
@@ -202,68 +199,7 @@ export default class App extends React.PureComponent {
       lightbox.currentPage.zoomWithTransform(trans);
     }
 
-    // if (Settings.panning) {
-    //   const matrix = ThreeAR.convertTransformArray(transform);
-
-    //   // const rotation = new THREE.Vector3();
-    //   // matrix.extractRotation(rotation);
-
-    //   var position = new THREE.Vector3();
-    //   var quaternion = new THREE.Quaternion();
-    //   var scale = new THREE.Vector3();
-
-    //   matrix.decompose(position, quaternion, scale);
-
-    //   var rotation = new THREE.Euler().setFromQuaternion(quaternion, 'XZY');
-
-    //   const MIN_ROT = 0;
-    //   const MAX_ROT = 0.8;
-    //   const pan = {
-    //     x: Math.max(MIN_ROT, rotation.x / MAX_ROT),
-    //     y: Math.max(MIN_ROT, rotation.z / MAX_ROT),
-    //   };
-    //   console.log(pan.x, pan.y); //, rotation.z
-    // }
-
-    // console.log('face shapes', blendShapes);
-
     this.setState({ ...blendShapes });
-
-    // if (this.scrollView && this.contentSize) {
-    //   let scrollSpace = {
-    //     width: Math.max(
-    //       0,
-    //       this.contentSize.width - this.scrollViewLayout.width,
-    //     ),
-    //     height: Math.max(
-    //       0,
-    //       this.contentSize.height - this.scrollViewLayout.height,
-    //     ),
-    //   };
-
-    //   const scrollCenter = {
-    //     x: scrollSpace.width * 0.5,
-    //     y: scrollSpace.height * 0.5,
-    //   };
-
-    //   console.log('and', { scrollSpace, scrollCenter });
-
-    //   this.scrollView.scrollResponderZoomTo({
-    //     x: 0,
-    //     y: 0,
-    //     ...scrollCenter,
-    //     width: this.props.zoomWidth,
-    //     height: this.props.zoomHeight,
-    //     animated: true,
-    //   });
-
-    //   this.scrollView.scrollTo({
-    //     // x: eyeLookInL * this.contentSize.width,
-    //     // y: leftEyebrow * this.contentSize.height,
-    //     ...scrollCenter,
-    //     animated: false,
-    //   });
-    // }
   };
 
   componentWillUnmount() {
@@ -309,15 +245,24 @@ export default class App extends React.PureComponent {
   };
 
   render() {
-    const keysToDisplay = [AR.BlendShapes.EyeLookInL];
+    const keysToDisplay = [AR.BlendShapes.MouthPucker];
 
     /*
 
 */
     return (
       <View style={styles.container}>
+        <LightBoxWrapper
+          id={'light-box'}
+          ref={ref => (this._lightboxContainer = ref)}
+        />
+
         <GraphicsView
-          style={StyleSheet.absoluteFillObject}
+          style={[
+            { opacity: this.state.opacity },
+            StyleSheet.absoluteFillObject,
+          ]}
+          pointerEvents={'none'}
           onContextCreate={this.onContextCreate}
           onRender={this.onRender}
           onResize={this.onResize}
@@ -327,18 +272,27 @@ export default class App extends React.PureComponent {
           isArCamera
           id={'graphics-view'}
         />
-        <LightBoxWrapper
-          id={'light-box'}
-          ref={ref => (this._lightboxContainer = ref)}
-        />
 
-        <View style={styles.infoContainer}>
+        <View style={[styles.infoContainer, { opacity: this.state.opacity }]}>
           {keysToDisplay.map((item, index) => (
             <InfoBox key={`-${index}`} title={item}>
               {this.state[item]}
             </InfoBox>
           ))}
         </View>
+
+        <Slider
+          style={{
+            position: 'absolute',
+            bottom: 48,
+            left: 24,
+            right: 24,
+            height: 24,
+          }}
+          minimumValue={0.01}
+          maximumValue={1}
+          onValueChange={opacity => this.setState({ opacity })}
+        />
       </View>
     );
   }
@@ -386,7 +340,7 @@ const styles = StyleSheet.create({
     // alignItems: 'center',
     // justifyContent: 'center',
     // paddingTop: Constants.statusBarHeight,
-    backgroundColor: '#ecf0f1',
+    backgroundColor: 'black',
   },
   paragraph: {
     margin: 24,
