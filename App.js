@@ -19,7 +19,10 @@ import { View as GraphicsView } from 'expo-graphics';
 const blendShapes = [
   // AR.BlendShapes.BrowDownL,
   // AR.BlendShapes.CheekPuff,
-  // AR.BlendShapes.EyeLookInL,
+  AR.BlendShapes.EyeLookInL,
+  AR.BlendShapes.EyeLookOutL,
+  AR.BlendShapes.EyeLookDownL,
+  AR.BlendShapes.EyeLookUpL,
   AR.BlendShapes.EyeBlinkL,
   AR.BlendShapes.EyeBlinkR,
   AR.BlendShapes.MouthPucker,
@@ -28,6 +31,7 @@ const blendShapes = [
 const Settings = {
   pageTurning: false,
   zooming: true,
+  panning: true,
 };
 
 export default class App extends React.PureComponent {
@@ -90,15 +94,18 @@ export default class App extends React.PureComponent {
   };
 
   handleFace = (anchor, eventType) => {
-    const { blendShapes } = anchor;
+    const { blendShapes, transform } = anchor;
 
     const {
       [AR.BlendShapes.BrowDownL]: leftEyebrow,
       [AR.BlendShapes.CheekPuff]: cheekPuff,
       [AR.BlendShapes.EyeLookInL]: eyeLookInL,
+      [AR.BlendShapes.EyeLookOutL]: eyeLookOutL,
       [AR.BlendShapes.EyeBlinkL]: blinkL,
       [AR.BlendShapes.EyeBlinkR]: blinkR,
       [AR.BlendShapes.MouthPucker]: mouthPucker,
+      [AR.BlendShapes.EyeLookDownL]: eyeLookDownL,
+      [AR.BlendShapes.EyeLookUpL]: eyeLookUpL,
     } = blendShapes;
 
     // if (!this.lightbox) {
@@ -128,6 +135,9 @@ export default class App extends React.PureComponent {
         this.openedEyeR = true;
       }
     }
+
+    let trans = { x: 0, y: 0, scale: 1 };
+
     if (Settings.zooming) {
       const PUCKER_MAX = 0.9;
       const PUCKER_MIN = 0.05;
@@ -139,10 +149,11 @@ export default class App extends React.PureComponent {
       let maximumZoomScale = (this.lightbox.currentPage || {}).maximumZoomScale;
       // console.log(zoomLevel);
 
-      let lightbox = this.lightbox;
-      if (lightbox && lightbox.currentPage) {
-        lightbox.currentPage.zoomWithAmount(1 - zoomLevel);
-      }
+      trans.scale = 1 + zoomLevel;
+      // let lightbox = this.lightbox;
+      // if (lightbox && lightbox.currentPage) {
+      //   lightbox.currentPage.zoomWithAmount(1 - zoomLevel);
+      // }
 
       // if (this.openedEyeL && blinkL > EYE_CLOSED_AMOUNT) {
       //   this.openedEyeL = false;
@@ -163,6 +174,56 @@ export default class App extends React.PureComponent {
       //   this.openedEyeR = true;
       // }
     }
+
+    if (Settings.panning) {
+      const calcValue = (value, min, max) => {
+        const delta = max - min;
+        const adjustedValue =
+          (Math.min(max, Math.max(min, value)) - min) / delta;
+
+        return adjustedValue;
+        // let maximumZoomScale = (this.lightbox.currentPage || {}).maximumZoomScale;
+        // console.log(zoomLevel);
+      };
+
+      const calcValues = (a, b) => {
+        const x = calcValue(a, 0, 0.5);
+        const outX = 1 - calcValue(b, 0, 0.5);
+        const pan = (outX + x) / 2;
+        return Math.min(1, Math.max(0, pan));
+      };
+
+      trans.x = calcValues(eyeLookInL, eyeLookOutL);
+      trans.y = calcValues(eyeLookDownL, eyeLookUpL);
+    }
+
+    let lightbox = this.lightbox;
+    if (lightbox && lightbox.currentPage) {
+      lightbox.currentPage.zoomWithTransform(trans);
+    }
+
+    // if (Settings.panning) {
+    //   const matrix = ThreeAR.convertTransformArray(transform);
+
+    //   // const rotation = new THREE.Vector3();
+    //   // matrix.extractRotation(rotation);
+
+    //   var position = new THREE.Vector3();
+    //   var quaternion = new THREE.Quaternion();
+    //   var scale = new THREE.Vector3();
+
+    //   matrix.decompose(position, quaternion, scale);
+
+    //   var rotation = new THREE.Euler().setFromQuaternion(quaternion, 'XZY');
+
+    //   const MIN_ROT = 0;
+    //   const MAX_ROT = 0.8;
+    //   const pan = {
+    //     x: Math.max(MIN_ROT, rotation.x / MAX_ROT),
+    //     y: Math.max(MIN_ROT, rotation.z / MAX_ROT),
+    //   };
+    //   console.log(pan.x, pan.y); //, rotation.z
+    // }
 
     // console.log('face shapes', blendShapes);
 
@@ -248,7 +309,7 @@ export default class App extends React.PureComponent {
   };
 
   render() {
-    const keysToDisplay = [AR.BlendShapes.MouthPucker];
+    const keysToDisplay = [AR.BlendShapes.EyeLookInL];
 
     /*
 

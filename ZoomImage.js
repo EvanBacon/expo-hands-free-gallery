@@ -89,15 +89,29 @@ export default class App extends React.Component {
     }
   }
 
-  zoomWithAmount = zoomLevel => {
-    const { layout } = this.state;
+  zoomWithTransform = ({ scale, x, y }) => {
+    const { layout, size: imageSize } = this.state;
     if (layout && this.maximumZoomScale) {
+      //   scale = 2;
       const nextSize = calculateSizeForZoomScale(
-        this.state.layout,
+        layout,
+        imageSize,
         this.maximumZoomScale,
-        zoomLevel,
+        scale,
       );
-      this.scrollTo({ x: 0, y: 0, ...nextSize });
+
+      const { width, height } = layout;
+
+      const availableWidth = Math.max(0, layout.width - nextSize.width);
+      const availableHeight = Math.max(0, layout.height - nextSize.height);
+
+      console.log(availableWidth, scale);
+
+      this.scrollTo({
+        x: availableWidth * x,
+        y: availableHeight * y,
+        ...nextSize,
+      });
     }
   };
 
@@ -147,7 +161,7 @@ export default class App extends React.Component {
 
     const { uri, maximumZoomScale } = this.state;
     const { style, id } = this.props;
-
+    /// DEBUG - mini zoom for panning
     return (
       <TapView
         style={style}
@@ -163,6 +177,7 @@ export default class App extends React.Component {
       >
         <ScrollView
           key={id}
+          scrollEventThrottle={32}
           scrollEnabled
           decelerationRate={'fast'}
           showsHorizontalScrollIndicator={false}
@@ -179,6 +194,7 @@ export default class App extends React.Component {
           minimumZoomScale={1}
           horizontal={this.horizontal}
           maximumZoomScale={maximumZoomScale}
+          minimumZoomScale={1}
           onContentSizeChange={(height, width) =>
             (this.contentSize = { height, width })
           }
